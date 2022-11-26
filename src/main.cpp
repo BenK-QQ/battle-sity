@@ -3,76 +3,128 @@
 
 #include <iostream>
 
+GLfloat point[] =
+{
+	0.0f, 0.5f, 0.0f,
+	0.5f, -0.5f, 0.0f,
+	-0.5f, -0.5f, 0.0f
+};
+
+GLfloat colors[] =
+{
+	1.0f, 0.0f, 0.0f,
+	0.0f, 1.0f, 0.0f,
+	0.0f, 0.0f, 1.0f
+};
+
+const char* vertex_shader =
+"#version 460\n"
+"layout(location = 0) in vec3 vertex_position;"
+"layout(location = 1) in vec3 vertex_color;"
+"out vec3 color"
+"void main() {"
+"   color = vertex_color;"
+"   gl_Position = vec4(vertex_position, 1.0);"
+"}";
+
+const char* fragment_shader =
+"#version 460\n"
+"in vec3 color;"
+"out vec4 frag_color;"
+"void main() {"
+"   frag_color = vec4(color, 1.0);"
+"}";
+
 int g_windowSizeX = 1024;
 int g_windowSizeY = 768;
 
 void glfwWindowSizeCallback(GLFWwindow* pWindow, int width, int heigth)
 {
-    g_windowSizeX = width;
-    g_windowSizeY = heigth;
-    glViewport(0, 0, g_windowSizeX, g_windowSizeY);
+	g_windowSizeX = width;
+	g_windowSizeY = heigth;
+	glViewport(0, 0, g_windowSizeX, g_windowSizeY);
 }
 
 void glfwKeyCallback(GLFWwindow* pWindow, int key, int scancode, int action, int mode)
 {
-    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(pWindow, GL_TRUE);
-    }
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(pWindow, GL_TRUE);
+	}
 }
 
 int main(void)
 {
-     /* Initialize the library */
-    if (!glfwInit()) 
-    {
-        std::cout << "glfwInit faled!" << std::endl;
-        return -1;
-    }
-        
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	/* Initialize the library */
+	if (!glfwInit())
+	{
+		std::cout << "glfwInit faled!" << std::endl;
+		return -1;
+	}
 
-    /* Create a windowed mode window and its OpenGL context */
-    GLFWwindow*  pWindow = glfwCreateWindow(g_windowSizeX, g_windowSizeY, "battle-sity", nullptr, nullptr);
-    if (!pWindow)
-    {
-        std::cout << "glfwCreateWindow faled!" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    glfwSetWindowSizeCallback(pWindow, glfwWindowSizeCallback);
-    glfwSetKeyCallback(pWindow, glfwKeyCallback);
+	/* Create a windowed mode window and its OpenGL context */
+	GLFWwindow* pWindow = glfwCreateWindow(g_windowSizeX, g_windowSizeY, "battle-sity", nullptr, nullptr);
+	if (!pWindow)
+	{
+		std::cout << "glfwCreateWindow faled!" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
 
-    /* Make the window's context current */
-    glfwMakeContextCurrent(pWindow);
-	
+	glfwSetWindowSizeCallback(pWindow, glfwWindowSizeCallback);
+	glfwSetKeyCallback(pWindow, glfwKeyCallback);
+
+	/* Make the window's context current */
+	glfwMakeContextCurrent(pWindow);
+
 	if (!gladLoadGL())
 	{
 		std::cout << "Can't load GLAD!" << std::endl;
 		return -1;
 	}
-	
-    std::cout << "Rendered: " << glGetString(GL_RENDERER) << std::endl;
-    std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+
+	std::cout << "Rendered: " << glGetString(GL_RENDERER) << std::endl;
+	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
 	glClearColor(0, 0, 1, 1);
 
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(pWindow))
-    {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vs, 1, &vertex_shader, nullptr);
+	glCompileShader(vs);
 
-        /* Swap front and back buffers */
-        glfwSwapBuffers(pWindow);
+	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fs, 1, &fragment_shader, nullptr);
+	glCompileShader(fs);
 
-        /* Poll for and process events */
-        glfwPollEvents();
-    }
+	GLuint shader_program = glCreateProgram();
+	glAttachShader(shader_program, vs);
+	glAttachShader(shader_program, fs);
+	glLinkProgram(shader_program);
 
-    glfwTerminate();
-    return 0;
+	glDeleteShader(vs);
+	glDeleteShader(fs);
+
+	GLuint points_vbo = 0;
+	glGenBuffers(1, &points_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
+
+	/* Loop until the user closes the window */
+	while (!glfwWindowShouldClose(pWindow))
+	{
+		/* Render here */
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		/* Swap front and back buffers */
+		glfwSwapBuffers(pWindow);
+
+		/* Poll for and process events */
+		glfwPollEvents();
+	}
+
+	glfwTerminate();
+	return 0;
 }
