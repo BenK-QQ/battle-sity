@@ -3,18 +3,20 @@
 
 #include <iostream>
 
+#include "Renderer/ShaderProgram.h"
+
 GLfloat point[] = {
- 
-     0.0f,  0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-    -0.5f, -0.5f, 0.0f
+
+	 0.0f,  0.5f, 0.0f,
+	 0.5f, -0.5f, 0.0f,
+	-0.5f, -0.5f, 0.0f
 };
 
 GLfloat colors[] = {
- 
-    1.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 1.0f
+
+	1.0f, 0.0f, 0.0f,
+	0.0f, 1.0f, 0.0f,
+	0.0f, 0.0f, 1.0f
 };
 
 
@@ -41,17 +43,17 @@ int g_windowSizeY = 480;
 
 void glfwWindowSizeCallback(GLFWwindow* pWindow, int width, int height)
 {
-    g_windowSizeX = width;
-    g_windowSizeY = height;
-    glViewport(0, 0, g_windowSizeX, g_windowSizeY);
+	g_windowSizeX = width;
+	g_windowSizeY = height;
+	glViewport(0, 0, g_windowSizeX, g_windowSizeY);
 }
 
 void glfwKeyCallback(GLFWwindow* pWindow, int key, int scancode, int action, int mode)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(pWindow, GL_TRUE);
-    }
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(pWindow, GL_TRUE);
+	}
 }
 
 int main(void)
@@ -93,21 +95,14 @@ int main(void)
 
 	glClearColor(1, 1, 1, 1);
 
-	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vs, 1, &vertex_shader, nullptr);
-	glCompileShader(vs);
-
-	GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fs, 1, &fragment_shader, nullptr);
-	glCompileShader(fs);
-
-	GLuint shader_program = glCreateProgram();
-	glAttachShader(shader_program, vs);
-	glAttachShader(shader_program, fs);
-	glLinkProgram(shader_program);
-
-	glDeleteShader(vs);
-	glDeleteShader(fs);
+	std::string vertexShader(vertex_shader);
+	std::string fragmentShader(fragment_shader);
+	Renderer::ShaderProgram shaderProgram(vertexShader, fragmentShader);
+	if (!shaderProgram.isCompiled())
+	{
+		std::cerr << "Can't create shader program!" << std::endl;
+		return -1;
+	}
 
 	GLuint points_vbo = 0;
 	glGenBuffers(1, &points_vbo);
@@ -131,13 +126,13 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-/* Loop until the user closes the window */
+	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(pWindow))
 	{
 		/* Render here */
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(shader_program);
+		shaderProgram.use();
 		glBindVertexArray(vao);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
